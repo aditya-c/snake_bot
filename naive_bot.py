@@ -48,41 +48,41 @@ def seek_till(look_distance, seek_value):
     x, y = my_location
     print(x,y,getX(x+1),getY(y+1),file=sys.stderr)
     print(board,file=sys.stderr)
-    dont_go = set()
+    directions_present = set()
     
     for loop_x in range(x + 1, x + look_distance + 1):
         if board[y][getX(loop_x)] in seek_value:
-            dont_go.add("RIGHT")
+            directions_present.add("RIGHT")
     
     for loop_x in range(x - look_distance, x):
         if board[y][getX(loop_x)] in seek_value:
-            dont_go.add("LEFT")
+            directions_present.add("LEFT")
     
     for loop_y in range(y + 1, y + look_distance + 1):
         if board[getY(loop_y)][x] in seek_value:
-            dont_go.add("DOWN")
+            directions_present.add("DOWN")
         
     for loop_y in range(y - look_distance, y):
         if board[getY(loop_y)][x] in seek_value:
-            dont_go.add("UP")
+            directions_present.add("UP")
         
     if board[getY(y+1)][getX(x+1)] in seek_value:
-        dont_go.add("RIGHT")
-        dont_go.add("DOWN")
+        directions_present.add("RIGHT")
+        directions_present.add("DOWN")
     
     if board[getY(y-1)][getX(x+1)] in seek_value:
-        dont_go.add("RIGHT")
-        dont_go.add("UP")
+        directions_present.add("RIGHT")
+        directions_present.add("UP")
     
     if board[getY(y+1)][getX(x-1)] in seek_value:
-        dont_go.add("LEFT")
-        dont_go.add("DOWN")
+        directions_present.add("LEFT")
+        directions_present.add("DOWN")
     
     if board[getY(y-1)][getX(x-1)] in seek_value:
-        dont_go.add("LEFT")
-        dont_go.add("UP")
+        directions_present.add("LEFT")
+        directions_present.add("UP")
     
-    return dont_go
+    return directions_present
 
 def seek_at(from_x, from_y, to_x, to_y):
     global board, my_location
@@ -104,11 +104,15 @@ def move(helper_bots):
     print(possible_directions, file=sys.stderr)
     possible_directions = possible_directions - dont_go
     print(dont_go,possible_directions, file=sys.stderr)
-    for d in possible_directions:
-        if look_ahead(my_location[0], my_location[1], d) == 0:
-            direction_choice = d
-            moved = True
-            break
+    if look_ahead(my_location[0], my_location[1], direction_choice) == 0:
+        moved = True
+    else:
+        possible_directions = possible_directions - set(direction_choice)
+        for d in possible_directions:
+            if look_ahead(my_location[0], my_location[1], d) == 0:
+                direction_choice = d
+                moved = True
+                break
     if not moved and helper_bots>0:
         deploy_strat()
     else:
