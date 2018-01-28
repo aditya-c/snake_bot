@@ -16,7 +16,6 @@ direction_choice = "LEFT"
 
 def look_ahead(x, y, direction):
     global board
-    print(x,y, file=sys.stderr)
     if direction == "LEFT":
         return board[y][getX(x-1)]
     if direction == "RIGHT":
@@ -68,8 +67,6 @@ def seek_specific(look_distance, seek_value):
 def seek_till(look_distance, seek_value):
     global board, my_location
     x, y = my_location
-    print(x,y,getX(x+1),getY(y+1),file=sys.stderr)
-    print(board,file=sys.stderr)
     directions_present = set()
     
     for loop_x in range(x + 1, x + look_distance + 1):
@@ -97,27 +94,34 @@ def seek_at(from_x, from_y, to_x, to_y):
     return board[getY(from_y + to_y)][getX(from_x + to_x)]
     
 def search_structure(possible_directions, size_of_structure = 5):
-    global board
+    global board, my_location
+    x,y = my_location
     neighbourhood = [[0 for u in range(size_of_structure)] for v in range(size_of_structure)]
-    for loop_y in range(5):
-        for loop_x in range(5):
-            neighbourhood[loop_y][loop_x] = board[loop_y][loop_x]
+    for loop_y in range(size_of_structure):
+        for loop_x in range(size_of_structure):
+            neighbourhood[loop_y][loop_x] = board[getY(y + loop_y - size_of_structure//2)][getX(x + loop_x - size_of_structure//2)]
     neighbourhood =  np.array(neighbourhood)
     
-    structure = np.array([[False,True,True,True,False], [True,True,True,True,True], [False,False,False,False,False], [False,False,False,False,False], [False,False,False,False,False]])
-    
+    if size_of_structure == 5:
+        structure = np.array([[False,True,True,True,False], [True,True,True,True,True], [False,False,False,False,False], [False,False,False,False,False], [False,False,False,False,False]])
+    elif size_of_structure == 7:
+        structure = np.array([[True, True, True, True, True, True, True], [True, True, True, True, True, True, True], [True, True, True, True, True, True, True], [False, False, False, False, False, False, False], [False, False, False, False, False, False, False], [False, False, False, False, False, False, False], [False, False, False, False, False, False, False]])
+    elif size_of_structure == 9:
+        structure = np.array([[False, True, True, True, True, True, True, True, False], [True, True, True, True, True, True, True, True, True], [True, True, True, True, True, True, True, True, True], [False, True, True, False, True, False, True, True, False], [False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False]])
+        
+    print("neigh", neighbourhood, file=sys.stderr)
     dir_weight = {}
-    dir_weight["UP"] = np.sum(neighbourhood * structure == 0)
+    dir_weight["UP"] = np.sum(neighbourhood * structure == 0) 
     dir_weight["DOWN"] = np.sum(np.flip(neighbourhood, 0) * structure == 0)
     dir_weight["LEFT"] = np.sum(neighbourhood.T * structure == 0)
     dir_weight["RIGHT"] = np.sum(np.flip(neighbourhood.T, 0) * structure == 0)
-
-    sorted_keys = sorted(dir_weight, key=lambda k: dir_weight[k])
+    
+    print("success %", dir_weight, file=sys.stderr)
+    sorted_keys = sorted(dir_weight, key=lambda k: dir_weight[k])[::-1]
     result = []
     for s in sorted_keys:
         if s in possible_directions:
             result.append(s)
-            print("ssssss", result,s, file=sys.stderr)
     return result
     
 def deploy_strat():
@@ -129,7 +133,7 @@ def move(helper_bots):
     possible_directions = set(direction.values())
     # avoid enemies logic
     dont_go = seek_specific(2, [2])
-    moved = False
+    moved = 0
     possible_directions = possible_directions - dont_go
     
     # fire logic
@@ -145,16 +149,20 @@ def move(helper_bots):
     #         possible_directions = possible_directions - set(direction_choice)
             
     # structure sum logic
-    better_directions = search_structure(possible_directions)
-    print("bad", better_directions, file=sys.stderr)
-    for d in better_directions:
-        if look_ahead(my_location[0], my_location[1], d) == 0:
-            direction_choice = d
-            moved = True
-            break
+    better_directions = search_structure(possible_directions, 7)
+    print("bad",better_directions, file=sys.stderr)
+    if better_directions[0] == direction_choice and look_ahead(my_location[0], my_location[1], direction_choice) == 1 and helper_bots >0:
+        deploy_strat()
+        moved = 2
+    else:
+        for d in better_directions:
+            if look_ahead(my_location[0], my_location[1], d) == 0:
+                direction_choice = d
+                moved = 1
+                break
     if not moved and helper_bots>0:
         deploy_strat()
-    else:
+    elif moved == 1:
         print(direction_choice)
             
 # game loop
@@ -188,12 +196,3 @@ while True:
         board[remove_y][remove_x] = 0
     # Write an action using print
     # To debug: print("Debug messages...", file=sys.stderr)
-
-
-    # DOWN | LEFT | RIGHT | UP or DEPLOY (to clear walls)
-    
-    
-        
-        
-        
-    # print(random.choice(direction.values()))
