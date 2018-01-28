@@ -43,6 +43,27 @@ def getY(y):
         return y - 15
     return y
 
+def seek_specific(look_distance, seek_value):
+    global board, my_location
+    directions_present = seek_till(look_distance, seek_value)
+    x, y = my_location
+    if board[getY(y+1)][getX(x+1)] in seek_value:
+        directions_present.add("RIGHT")
+        directions_present.add("DOWN")
+    
+    if board[getY(y-1)][getX(x+1)] in seek_value:
+        directions_present.add("RIGHT")
+        directions_present.add("UP")
+    
+    if board[getY(y+1)][getX(x-1)] in seek_value:
+        directions_present.add("LEFT")
+        directions_present.add("DOWN")
+    
+    if board[getY(y-1)][getX(x-1)] in seek_value:
+        directions_present.add("LEFT")
+        directions_present.add("UP")
+    return directions_present
+
 def seek_till(look_distance, seek_value):
     global board, my_location
     x, y = my_location
@@ -65,22 +86,6 @@ def seek_till(look_distance, seek_value):
     for loop_y in range(y - look_distance, y):
         if board[getY(loop_y)][x] in seek_value:
             directions_present.add("UP")
-        
-    if board[getY(y+1)][getX(x+1)] in seek_value:
-        directions_present.add("RIGHT")
-        directions_present.add("DOWN")
-    
-    if board[getY(y-1)][getX(x+1)] in seek_value:
-        directions_present.add("RIGHT")
-        directions_present.add("UP")
-    
-    if board[getY(y+1)][getX(x-1)] in seek_value:
-        directions_present.add("LEFT")
-        directions_present.add("DOWN")
-    
-    if board[getY(y-1)][getX(x-1)] in seek_value:
-        directions_present.add("LEFT")
-        directions_present.add("UP")
     
     return directions_present
 
@@ -93,30 +98,36 @@ def seek_at(from_x, from_y, to_x, to_y):
     
 def deploy_strat():
     print("DEPLOY")
-    pass
 
 
 def move(helper_bots):
     global my_location, direction_choice
     possible_directions = set(direction.values())
-    dont_go = seek_till(2, [2])
+    # avoid enemies logic
+    dont_go = seek_specific(2, [2])
     moved = False
-    print(possible_directions, file=sys.stderr)
     possible_directions = possible_directions - dont_go
-    print(dont_go,possible_directions, file=sys.stderr)
-    if direction_choice in possible_directions and look_ahead(my_location[0], my_location[1], direction_choice) == 0:
-        moved = True
-    else:
-        possible_directions = possible_directions - set(direction_choice)
-        for d in possible_directions:
-            if look_ahead(my_location[0], my_location[1], d) == 0:
-                direction_choice = d
-                moved = True
-                break
-    if not moved and helper_bots>0:
+    
+    # fire logic
+    fire = look_ahead(my_location[0], my_location[1], direction_choice) == 1 and direction_choice in seek_till(2, [0])
+    
+    if fire:
         deploy_strat()
     else:
-        print(direction_choice)
+        # go straight logic
+        if direction_choice in possible_directions and look_ahead(my_location[0], my_location[1], direction_choice) == 0:
+            moved = True
+        else:
+            possible_directions = possible_directions - set(direction_choice)
+            for d in possible_directions:
+                if look_ahead(my_location[0], my_location[1], d) == 0:
+                    direction_choice = d
+                    moved = True
+                    break
+        if not moved and helper_bots>0:
+            deploy_strat()
+        else:
+            print(direction_choice)
             
 # game loop
 loop_2 = False
