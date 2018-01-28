@@ -104,7 +104,7 @@ def move(helper_bots):
     print(possible_directions, file=sys.stderr)
     possible_directions = possible_directions - dont_go
     print(dont_go,possible_directions, file=sys.stderr)
-    if look_ahead(my_location[0], my_location[1], direction_choice) == 0:
+    if direction_choice in possible_directions and look_ahead(my_location[0], my_location[1], direction_choice) == 0:
         moved = True
     else:
         possible_directions = possible_directions - set(direction_choice)
