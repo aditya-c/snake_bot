@@ -36,6 +36,33 @@ def look_ahead(x, y, direction):
 #     global board
 #     for i in board:
 #         print(board[i], file=sys.stderr)
+
+def alt_direction(direction):
+    alt_d = "LEFT"
+    if direction == "LEFT":
+        alt_d = "RIGHT"
+    if direction == "DOWN":
+        alt_d = "UP"
+    if direction == "UP":
+        alt_d = "DOWN"
+    return alt_d
+
+def next_best(direction_costs, sorted_keys):
+    global my_location, direction
+    deep_costs = dict()
+    for d in sorted_keys:
+        if direction_costs[d] > 0:
+            alt_set = set()
+            alt_set.add(alt_direction(d))
+            temp = search_structure(get_new_location(my_location[0], my_location[1], d), set(direction.values()) - alt_set, 13)
+            deep_costs[d] = max(temp.values())
+        else:
+            deep_costs[d] = 0
+    print("deep",deep_costs ,file=sys.stderr)
+    return deep_costs
+    
+    
+    
 def getX(x):
     if x < 0:
         return 30 + x
@@ -120,7 +147,9 @@ def search_structure(location, possible_directions, size_of_structure = 5):
     elif size_of_structure == 13:
         # structure = np.array([[False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, True, True, True, True, True, True, True, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False]])
         structure = np.array([[False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, True, True, True, True, True, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False], [False, False, False, False, False, False, False, False, False, False, False, False, False]])
-    print("neigh", neighbourhood, file=sys.stderr)
+    # print("neigh", neighbourhood, file=sys.stderr)
+    # print("possible_directions", possible_directions, file=sys.stderr)
+    
     dir_weight = {}
     dir_weight["UP"] = np.sum(neighbourhood * structure == 0) 
     dir_weight["DOWN"] = np.sum(np.flip(neighbourhood, 0) * structure == 0)
@@ -171,6 +200,7 @@ def move(helper_bots):
     # structure sum logic
     direction_costs = search_structure(my_location, possible_directions, 13)
     sorted_keys = sorted(direction_costs, key=lambda k: direction_costs[k])[::-1]
+    deep_costs = next_best(direction_costs,sorted_keys)
     
     better_directions = list(sorted_keys)
     print("bad",direction_costs, file=sys.stderr)
